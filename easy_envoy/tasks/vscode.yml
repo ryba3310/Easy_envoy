@@ -33,11 +33,13 @@
     file:
       path: /home/vscode/.config/code-server/
       state: directory
+      owner: vscode
 
   - name: Copy config for code-server
     copy:
       src: ./easy_envoy/files/config.yml
       dest: /home/vscode/.config/code-server/config.yml
+      owner: vscode
 
   - name: Copy systemd unit file for vscode
     copy:

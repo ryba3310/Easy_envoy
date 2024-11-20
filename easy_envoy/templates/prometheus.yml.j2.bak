@@ -1,8 +1,0 @@
-
- scrape_configs:
-
-{% for host in ansible_play_hosts_all %}
-     - job_name: '{{ hostvars[host].ansible_hostname}}'
-       static_configs:
-       - targets: ['{{ hostvars[host].ansible_default_ipv4.address }}:9100']
-{% endfor %}

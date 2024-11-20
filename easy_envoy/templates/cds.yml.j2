@@ -60,6 +60,21 @@ resources:
               address: {{ hostvars[host].ansible_default_ipv4.address }}
               port_value: 8080
 {% endif %}
+{% if hostvars[host].grafana is defined %}
+- "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
+  name: grafana
+  per_connection_buffer_limit_bytes: 32768  # 32 KiB
+  type: LOGICAL_DNS
+  load_assignment:
+    cluster_name: grafana
+    endpoints:
+    - lb_endpoints:
+      - endpoint:
+          address:
+            socket_address:
+              address: {{ hostvars[host].ansible_default_ipv4.address }}
+              port_value: 3030
+{% endif %}
 {% endfor %}
 {% for host in ansible_play_hosts_all %}
 {% for key in hostvars[host] %}

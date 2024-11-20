@@ -49,17 +49,15 @@ resources:
         "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
         path: /var/local/envoy/listener_443.log
   listener_filters:
-  # Uncomment if Envoy is behind a load balancer that exposes client IP address using the PROXY protocol.
-  # - name: envoy.filters.listener.proxy_protocol
-  #   typed_config:
-  #     "@type": type.googleapis.com/envoy.extensions.filters.listener.proxy_protocol.v3.ProxyProtocol
- # - name: "envoy.filters.listener.tls_inspector"
- #   typed_config:
- #     "@type": type.googleapis.com/envoy.extensions.filters.listener.tls_inspector.v3.TlsInspector
- # per_connection_buffer_limit_bytes: 32768  # 32 KiB
+  - name: "envoy.filters.listener.tls_inspector"
+    typed_config:
+      "@type": type.googleapis.com/envoy.extensions.filters.listener.tls_inspector.v3.TlsInspector
   filter_chains:
   - filter_chain_match:
-      server_names: ["{{ domain_name  }}", "*.{{ domain_name }}"]
+      transport_protocol: tls
+      application_protocols: [h2]
+      server_names: ["justalab.xyz", "*.justalab.xyz"]
+        #application_protocols: [http/1.1]
     transport_socket:
       name: envoy.transport_sockets.tls
       typed_config:
@@ -100,8 +98,21 @@ resources:
           typed_config:
             "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
             path: /var/local/envoy/http.log
+            #log_format:
+              #text_format_source:
+                #inline_string: 'downstream_remote_address=%DOWNSTREAM_REMOTE_ADDRESS% host=%REQ(:AUTHORITY)% latencyMs=%DURATION% protocol=%PROTOCOL%  remoteIp=%DOWNSTREAM_REMOTE_ADDRESS%  requestHeaderBytes=%REQUEST_HEADERS_BYTES% requestMethod=%REQ(:METHOD)% requestSize=%BYTES_RECEIVED% responseCodeDetails=%RESPONSE_CODE_DETAILS% responseFlags=%RESPONSE_FLAGS% responseSize=%BYTES_SENT% status=%RESPONSE_CODE% upstreamAddr=%UPSTREAM_HOST% upstreamTransFail=%UPSTREAM_TRANSPORT_FAILURE_REASON% \n\n'
+
         route_config:
           virtual_hosts:
+            - header:
+                key: "Connection"
+                value: "upgrade"
+              header:
+                key: "Upgrade"
+                value: "websocket"
+              header:
+                key: "Origin"
+                value: "http://10.2.2.13:8081/" # Hardcoded for testing if headers are the issue, for some reasone other headers don't get written
           - name: excalidraw
             domains: ["*"]
             routes:
@@ -157,6 +168,18 @@ resources:
                       contains: "guacamole"
               route:
                 cluster: guacamole
+                upgrade_configs:
+                - upgrade_type: websocket
+                #idle_timeout: 15s  # must be disabled for long-lived and streaming requests
+            - match:
+               prefix: "/"
+               headers:
+                 - name: ":authority"
+                   #present_match: True
+                   string_match:
+                     contains: "grafana"
+              route:
+                cluster: grafana
                 upgrade_configs:
                 - upgrade_type: websocket
                 #idle_timeout: 15s  # must be disabled for long-lived and streaming requests

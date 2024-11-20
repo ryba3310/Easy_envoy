@@ -59,6 +59,10 @@
     copy:
       src: ./easy_envoy/files/grafana.ini
       dest: /etc/grafana/grafana.ini
+  - name: Copy grafana.db for dashbard and default password set
+    copy:
+      src: ./easy_envoy/files/grafana.db
+      dest: /var/lib/grafana/grafana.db
   when: grafana is defined
 
 
