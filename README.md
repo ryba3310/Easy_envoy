@@ -63,8 +63,14 @@ Root acces to hosts thorugh sudo with provided password in .passwordfile or play
 - ✅  Setup centralized Grafana in some point of the network
 - ✅  Setup firewall for each host
 - ✅  Setup certbot and wildcard domain name
-- ⚠️  Generate and setup CA for mTLS authentication
+- ⚠️  Generate and setup CA for mTLS authentication(use ECDSA P-256 at least)
 - ✅  Create some dasboards and presserve the config across deployments of this playbook
+- ⚠️  Tidy up README and make it comprehensive
+- ⚠️  Describe variables for hosts setting in inventory
+- ⚠️  Minor fixes in naming and redundant expressions
+- ✅  Fix downstream ssl error 'error:0A000126:SSL routines::unexpected eof while reading', maybe something with libs?
+- ⚠️  Seperate services for mTLS enabled and just TLS enabled
+- ⚠️  Fix vscode-server issue with websocket and tls, rather related to proxy as it works flawless without TLS
 
 
 
