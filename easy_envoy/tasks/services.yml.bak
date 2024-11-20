@@ -1,0 +1,49 @@
+---
+- name: Install ots
+  block:
+  - name: "Grab archive for ots"
+    get_url:
+      url: "https://github.com/Luzifer/ots/releases/download/v1.13.0/ots_linux_amd64.tgz"
+      dest: /root/
+
+  - name: "Create dir for ots"
+    file:
+      path: "/opt/ots/"
+      state: directory
+
+  - name: "Unpack ots"
+    unarchive:
+      src: "/root/ots_linux_amd64.tgz"
+      remote_src: True
+      dest: "/opt/ots/"
+
+  - name: "Create user for ots"
+    user:
+      name: "ots"
+      state: present
+      shell: /bin/nologin
+
+  - name: "Create systemd unit file for ots"
+    copy:
+      dest: "/etc/systemd/system/ots.service"
+      content: |
+        [Unit]
+        Description="ots Unit"
+        Wants=network-online.target
+
+        [Service]
+        Type=simple
+        ExecStart=/opt/ots/ots
+        User=ots
+        Group=ots
+
+        [Install]
+        WantedBy=default.target
+    notify:
+      - "ots_start"
+  when: ansible_hostname == "debian"
+
+
+
+
+

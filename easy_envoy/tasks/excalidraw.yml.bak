@@ -1,0 +1,40 @@
+- name: Install excalidraw BLOCK
+  block:
+  - name: Get Excalidraw binary from repo
+    get_url:
+      url: https://github.com/PatWie/excalidraw-complete/releases/download/0.0.2/excalidraw-complete_Linux_x86_64.tar.gz
+      dest: /root/
+
+  - name: Create dir for Excalidraw
+    file:
+      path: /opt/excalidraw/
+      state: directory
+
+  - name: Create dir for Excalidraw logs
+    file:
+      path: /var/local/envoy/
+      mode: '1777'
+      state: directory
+
+  - name: Unpack Excalidaw to /opt/excalidraw
+    unarchive:
+      src: /root/excalidraw-complete_Linux_x86_64.tar.gz
+      remote_src: True
+      dest: /opt/excalidraw/
+
+  - name: Create user for Excalidraw
+    user:
+      name: excalidraw
+      shell: /bin/nologin
+      state: present
+      system: False
+
+  - name: Copy systemd unit file for Excalidraw
+    copy:
+      src: ./easy_envoy/files/excalidraw.service
+      dest: /etc/systemd/system/excalidraw.service
+    notify:
+      - excalidraw_start
+  when: excalidraw is defined
+
+

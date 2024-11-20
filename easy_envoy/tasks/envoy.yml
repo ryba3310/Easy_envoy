@@ -1,0 +1,71 @@
+- name: Install envoy BLOCK
+  block:
+  - name: Get gpg key for Envoy
+    get_url:
+      url: https://apt.envoyproxy.io/signing.key
+      dest: /etc/apt/keyrings/signing.key
+
+  - name: Get key and and add it to keyring
+    shell: "cat /etc/apt/keyrings/signing.key | gpg --yes --dearmor -o /etc/apt/keyrings/envoy-keyring.gpg"
+
+  - name: set apt source for Envoy
+    apt_repository:
+      repo: "deb [signed-by=/etc/apt/keyrings/envoy-keyring.gpg] https://apt.envoyproxy.io {{ ansible_distribution_release }} main"
+      state: present
+    when: ansible_distribution == "Ubuntu"
+
+  - name: set apt source for Envoy
+    apt_repository:
+      repo: "deb [signed-by=/etc/apt/keyrings/envoy-keyring.gpg] https://apt.envoyproxy.io {{ ansible_distribution_release }} main"
+      state: present
+    when: ansible_distribution == "Debian"
+
+  - name: Install Envoy Proxy
+    apt:
+      pkg: envoy
+      state: latest
+      update_cache: True
+
+  - name: Create Envoy user
+    user:
+      name: envoy
+      shell: /bin/nologin
+      state: present
+      system: True
+
+  - name: Copy static envoy config
+    copy:
+      src: ./easy_envoy/files/envoy.yml
+      dest: /etc/envoy/envoy.yml
+
+  - name: Create envoy listener config
+    template:
+      src: ./easy_envoy/templates/lds.yml.j2
+      dest: /etc/envoy/lds.yml
+
+  - name: Create envoy cluster config
+    template:
+      src: ./easy_envoy/templates/cds.yml.j2
+      dest: /etc/envoy/cds.yml
+
+  - name: Set capabilites for envoy to bind to ports  < 1024
+    capabilities:
+      capability: cap_net_bind_service+ep
+      path: /usr/bin/envoy
+      state: present
+
+  - name: Create logs directory
+    file:
+      path: /var/local/envoy/
+      state: directory
+      mode: '1777'
+      owner: envoy
+
+  - name: Copy systemd unit file to target
+    copy:
+      src: ./easy_envoy/files/envoy.service
+      dest: /etc/systemd/system/envoy.service
+    notify:
+      - envoy_start
+  when: envoy is defined
+

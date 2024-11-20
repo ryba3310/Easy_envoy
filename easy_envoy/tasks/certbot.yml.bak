@@ -1,0 +1,46 @@
+- name: Install cerbot and obatin SSL cert BLOCK
+  block:
+  - name: Intall pip
+    apt:
+      pkg: pip
+      latest: present
+    when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+  - name: Intall pip
+    dnf:
+      pkg: pip
+      latest: present
+    when: ansible_distribution == "Fedora"
+
+  - name: Create certbot dir
+    file:
+      path: /opt/certbot/
+      state: directory
+
+  - name: Setup pip env and install certbot
+    pip:
+      name:
+        - certbot
+        - certbot_dns_porkbun
+      virtualenv: /opt/certbot/
+      state: latest
+
+  - name: Obtain certificate with certbot
+    shell: '/opt/certbot/bin/certbot certonly \
+    --non-interactive \
+    --agree-tos \
+    --email {{ email_address }} \
+    --preferred-challenges dns \
+    --authenticator dns-porkbun \
+    --dns-porkbun-key {{ porkbun_api_key }} \
+    --dns-porkbun-secret {{ porkbun_secret }} \
+    --dns-porkbun-propagation-seconds 60 \
+    -d "*.{{ domain_name }}"'
+    register: shell_cert
+
+    - name:
+    file:
+      path: /etc/letsencrypt/
+      recurse: True
+      owner: envoy
+  when: envoy is defined

@@ -1,0 +1,15 @@
+
+[Unit]
+Description=VSCode server Unit
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/opt/vscode/code-server-4.95.1-linux-amd64/bin/code-server
+StandardOutput=append:/var/local/envoy/vscode.log
+StandardError=append:/var/local/envoy/vscode.err.log
+User=vscode
+Group=vscode
+
+[Install]
+WantedBy=default.target

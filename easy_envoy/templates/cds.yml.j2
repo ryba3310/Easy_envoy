@@ -1,0 +1,83 @@
+resources:
+{% for host in ansible_play_hosts_all %}
+{% if hostvars[host].excalidraw is defined %}
+- "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
+  name: excalidraw
+  per_connection_buffer_limit_bytes: 32768  # 32 KiB
+  type: LOGICAL_DNS
+  load_assignment:
+    cluster_name: excalidraw
+    endpoints:
+    - lb_endpoints:
+      - endpoint:
+          address:
+            socket_address:
+              address: {{ hostvars[host].ansible_default_ipv4.address}}
+              port_value: 3002
+{% endif %}
+{% if hostvars[host].wastebin is defined %}
+- "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
+  name: wastebin
+  #per_connection_buffer_limit_bytes: 32768  # 32 KiB
+  type: LOGICAL_DNS
+  load_assignment:
+    cluster_name: wastebin
+    endpoints:
+    - lb_endpoints:
+      - endpoint:
+          address:
+            socket_address:
+              address: {{ hostvars[host].ansible_default_ipv4.address }}
+              port_value: 8088
+{% endif %}
+{% if hostvars[host].vscode is defined %}
+- "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
+  name: vscode
+  per_connection_buffer_limit_bytes: 32768  # 32 KiB
+  type: LOGICAL_DNS
+  load_assignment:
+    cluster_name: vscode
+    endpoints:
+    - lb_endpoints:
+      - endpoint:
+          address:
+            socket_address:
+              address: {{ hostvars[host].ansible_default_ipv4.address }}
+              port_value: 8081
+{% endif %}
+{% if hostvars[host].guacamole is defined %}
+- "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
+  name: guacamole
+  per_connection_buffer_limit_bytes: 32768  # 32 KiB
+  type: LOGICAL_DNS
+  load_assignment:
+    cluster_name: guacamole
+    endpoints:
+    - lb_endpoints:
+      - endpoint:
+          address:
+            socket_address:
+              address: {{ hostvars[host].ansible_default_ipv4.address }}
+              port_value: 8080
+{% endif %}
+{% endfor %}
+{% for host in ansible_play_hosts_all %}
+{% for key in hostvars[host] %}
+{% if key | regex_search('service[0-9]+_port$') %}
+{% set service_name = key | regex_search('service[0-9]+') %}
+- "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
+  name: {{ hostvars[host][service_name] }}
+  per_connection_buffer_limit_bytes: 32768  # 32 KiB
+  type: LOGICAL_DNS
+  load_assignment:
+    cluster_name: {{ hostvars[host][service_name] }}
+    endpoints:
+    - lb_endpoints:
+      - endpoint:
+          address:
+            socket_address:
+              address: {{ hostvars[host].ansible_default_ipv4.address }}
+              port_value: {{ hostvars[host][key] }}
+{% endif %}
+{% endfor %}
+{% endfor %}

@@ -1,0 +1,4 @@
+#!/bin/bash
+xrdb $HOME/.Xresources
+/usr/bin/gnome-session &
+

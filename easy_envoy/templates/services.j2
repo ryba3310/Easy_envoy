@@ -1,0 +1,56 @@
+---
+{% for key in hostvars[inventory_hostname] %}
+{% if key | regex_search('service[0-9]+_port$') %}
+{% set service_name = key | regex_search('service[0-9]+') %}
+{% set service_path = service_name ~ '_path' | string %}
+{% set service_url = service_name ~ '_url' | string %}
+- name: Install {{ hostvars[inventory_hostname][service_name] }}
+  block:
+  - name: "Grab archive for {{ hostvars[inventory_hostname][service_name] }}"
+    get_url:
+      url: "{{ hostvars[inventory_hostname][service_url] }}"
+      dest: /root/
+
+  - name: "Create dir for {{ hostvars[inventory_hostname][service_name] }}"
+    file:
+      path: "/opt/{{ hostvars[inventory_hostname][service_name] }}/"
+      state: directory
+
+  - name: "Unpack {{ hostvars[inventory_hostname][service_name] }}"
+    unarchive:
+      src: "/root/{{ hostvars[inventory_hostname][service_url] | urlsplit('path') | basename }}"
+      remote_src: True
+      dest: "/opt/{{ hostvars[inventory_hostname][service_name] }}/"
+      
+  - name: "Create user for {{ hostvars[inventory_hostname][service_name] }}"
+    user:
+      name: "{{ hostvars[inventory_hostname][service_name] }}"
+      state: present
+      shell: /bin/nologin
+
+  - name: "Create systemd unit file for {{ hostvars[inventory_hostname][service_name] }}"
+    copy: 
+      dest: "/etc/systemd/system/{{ hostvars[inventory_hostname][service_name] }}.service"
+      content: |
+        [Unit]
+        Description="{{ hostvars[inventory_hostname][service_name] }} Unit"
+        Wants=network-online.target
+
+        [Service]
+        Type=simple
+        ExecStart={{ hostvars[inventory_hostname][service_path] }}
+        User={{ hostvars[inventory_hostname][service_name] }}
+        Group={{ hostvars[inventory_hostname][service_name] }}
+
+        [Install]
+        WantedBy=default.target
+    notify:
+      - "{{ hostvars[inventory_hostname][service_name] }}_start"
+  when: inventory_hostname {{ '== "' ~ inventory_hostname ~ '"' }}
+
+
+   
+{% endif %}
+{% endfor %}
+ 
+

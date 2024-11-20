@@ -1,0 +1,14 @@
+[Unit]
+Description=Excalidraw Unit
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/opt/excalidraw/excalidraw-complete
+StandardOutput=append:/var/local/envoy/excalidraw.log
+StandardError=append:/var/local/envoy/excalidraw.err.log
+User=excalidraw
+Group=excalidraw
+
+[Install]
+WantedBy=default.target

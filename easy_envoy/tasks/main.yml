@@ -1,0 +1,58 @@
+---
+# tasks file for easy_envoy
+
+- name: Debug facts
+  debug:
+    var: ansible_facts
+    verbosity: 1
+
+- name: Install firewall
+  import_tasks: firewall.yml
+
+- name: install certbot and obtain SSL cert
+  import_tasks: certbot.yml
+
+- name: Install envoy
+  import_tasks: envoy.yml
+
+- name: Install excalidraw
+  import_tasks: excalidraw.yml
+
+- name: Install wastebin
+  import_tasks: wastebin.yml
+
+- name: Install vscode
+  import_tasks: vscode.yml
+
+- name: Install guacamole
+  import_tasks: guacamole.yml
+
+- name: Install vnc_server
+  import_tasks: vnc_server.yml
+
+- name: Install services
+  import_tasks: services.yml
+
+- name: Install grafana
+  import_tasks: grafana.yml
+
+- name: Install loki
+  import_tasks: loki.yml
+
+- name: Install promtail
+  import_tasks: promtail.yml
+
+- name: Install prometheus
+  import_tasks: prometheus.yml
+
+- name: Install node_exporter
+  import_tasks: node_exporter.yml
+
+- name: Install fail2ban
+  import_tasks: fail2ban.yml
+
+- import_tasks: ../handlers/main.yml
+
+
+
+

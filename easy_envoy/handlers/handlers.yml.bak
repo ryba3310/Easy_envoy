@@ -1,0 +1,9 @@
+
+
+    - name: "ots_start"
+      systemd:
+        name: "ots.service"
+        state: started
+        enabled: True
+
+ 

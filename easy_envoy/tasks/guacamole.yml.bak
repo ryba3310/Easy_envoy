@@ -1,0 +1,74 @@
+- name: Install guacamole and docker BLOCK
+  block:
+  - name: Install Docker
+    apt:
+      pkg: docker.io
+      state: latest
+    when: ansible_distribution == "Ubuntu"
+
+  - name: Install Docker
+    dnf:
+      pkg: docker
+      state: latest
+    when: ansible_distribution == "Fedora"
+
+  - name: Install Docker
+    apt:
+      pkg: docker.io
+      state: latest
+    when: ansible_distribution == "Debian"
+
+
+  - name: Pull guacamole image to
+    community.docker.docker_container:
+      name: my_guacamole
+      image: guacamole/guacamole
+      state: present
+
+  - name: Get postgre configuration script
+    shell: "docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --postgresql > /root/initdb.sql"
+
+  - name: Run postgresql and init user and db with env values
+    community.docker.docker_container:
+      name: postgre_guac
+      image: postgres:17-alpine
+      state: healthy
+      env:
+        POSTGRES_PASSWORD: 123qwe
+        POSTGRES_USER: guacamole_user
+        POSTGRES_DB: guacamole_db
+        PGPASSWORD: 123qwe
+      detach: True
+      volumes: /root/initdb.sql:/initdb.sql:z
+
+  - name: Run guacd
+    community.docker.docker_container:
+      name: my_guac
+      image: guacamole/guacd
+      state: started
+      detach: True
+
+  - name: Sleep neccessary for postgresql to finish initail config
+    shell: sleep 5
+
+  - name: Run config script
+    shell: "docker exec -ti postgre_guac bash -l -c 'cat /initdb.sql | psql -d guacamole_db -U guacamole_user -f -'"
+
+  - name: Run guacamole
+    community.docker.docker_container:
+      name: my_guacamole
+      image: guacamole/guacamole
+      state: started
+      detach: True
+      ports:
+        - "{{ hostvars[inventory_hostname].ansible_default_ipv4.address }}8080:8080"
+      links:
+        - "my_guac:guacd"
+        - "postgre_guac:postgres"
+      env:
+        POSTGRESQL_DATABASE: guacamole_db
+        POSTGRESQL_USER: guacamole_user
+        POSTGRESQL_PASSWORD: 123qwe
+        REMOTE_IP_VALVE_ENABLED: "True"
+  when: guacamole is defined
+

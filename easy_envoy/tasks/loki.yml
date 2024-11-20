@@ -1,0 +1,61 @@
+- name: Install loki BLOCK
+  block:
+  - name: Get gpg singing key
+    get_url:
+      url: https://apt.grafana.com/gpg.key
+      dest: /root/grafana.gpg
+
+  - name: Block for Debian
+    block:
+      - name: Install neccesary dependencies for Grafana
+        apt:
+          pkg:
+            - apt-transport-https
+            - software-properties-common
+            - wget
+          state: latest
+      - name: Conver key from PEM format to openPGP
+        shell: "cat /root/grafana.gpg | gpg --dearmor --yes -o /etc/apt/keyrings/grafana.gpg"
+
+      - name: Add Grafana repo
+        apt_repository:
+          repo: "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main"
+          state: present
+
+      - name: Install loki
+        apt:
+          pkg:
+            - loki
+          state: latest
+          update_cache: True
+        notify:
+          - start_loki
+    when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+  - name: Block for Fedora
+    block:
+      - name: Add grafana repo for rpm
+        yum_repository:
+          name: Grafana
+          description: Grafana repo
+          baseurl: https://rpm.grafana.com
+          gpgcheck: True
+          sslcacert: /etc/pki/tls/certs/ca-bundle.crt
+          sslverify: True
+          state: present
+          enabled: True
+          gpgkey: https://apt.grafana.com/gpg.key
+          repo_gpgcheck: True
+
+      - name: Install loki
+        dnf:
+          pkg:
+            - loki
+          state: latest
+          update_cache: True
+        notify:
+          - start_loki
+    when: ansible_distribution == "Fedora"
+  when: loki is defined
+
+

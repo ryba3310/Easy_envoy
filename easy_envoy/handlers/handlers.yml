@@ -1,0 +1,8 @@
+
+- name: "ots_start"
+  systemd:
+    name: "ots.service"
+    state: started
+    enabled: True
+  when: service1 is defined
+

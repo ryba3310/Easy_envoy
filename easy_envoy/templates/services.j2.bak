@@ -1,0 +1,56 @@
+---
+{% for key in hostvars[ansible_hostname] %}
+{% if key | regex_search('service[0-9]+_port$') %}
+{% set service_name = key | regex_search('service[0-9]+') %}
+{% set service_path = service_name ~ '_path' | string %}
+{% set service_url = service_name ~ '_url' | string %}
+- name: Install {{ hostvars[ansible_hostname][service_name] }}
+  block:
+  - name: "Grab archive for {{ hostvars[ansible_hostname][service_name] }}"
+    get_url:
+      url: "{{ hostvars[ansible_hostname][service_url] }}"
+      dest: /root/
+
+  - name: "Create dir for {{ hostvars[ansible_hostname][service_name] }}"
+    file:
+      path: "/opt/{{ hostvars[ansible_hostname][service_name] }}/"
+      state: directory
+
+  - name: "Unpack {{ hostvars[ansible_hostname][service_name] }}"
+    unarchive:
+      src: "/root/{{ hostvars[ansible_hostname][service_url] | urlsplit('path') | basename }}"
+      remote_src: True
+      dest: "/opt/{{ hostvars[ansible_hostname][service_name] }}/"
+      
+  - name: "Create user for {{ hostvars[ansible_hostname][service_name] }}"
+    user:
+      name: "{{ hostvars[ansible_hostname][service_name] }}"
+      state: present
+      shell: /bin/nologin
+
+  - name: "Create systemd unit file for {{ hostvars[ansible_hostname][service_name] }}"
+    copy: 
+      dest: "/etc/systemd/system/{{ hostvars[ansible_hostname][service_name] }}.service"
+      content: |
+        [Unit]
+        Description="{{ hostvars[ansible_hostname][service_name] }} Unit"
+        Wants=network-online.target
+
+        [Service]
+        Type=simple
+        ExecStart={{ hostvars[ansible_hostname][service_path] }}
+        User={{ hostvars[ansible_hostname][service_name] }}
+        Group={{ hostvars[ansible_hostname][service_name] }}
+
+        [Install]
+        WantedBy=default.target
+    notify:
+      - "{{ hostvars[ansible_hostname][service_name] }}_start"
+  when: ansible_hostname {{ '== "' ~ ansible_hostname ~ '"' }}
+
+
+   
+{% endif %}
+{% endfor %}
+ 
+

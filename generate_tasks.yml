@@ -1,0 +1,20 @@
+---
+
+- name: Generate service task files for hosts
+  hosts: hosts
+  gather_facts: True
+  tasks:
+
+    - name: Create additional services file
+      template:
+        src: ./easy_envoy/templates/services.j2
+        dest: ./easy_envoy/tasks/services.yml
+      delegate_to: localhost
+
+    - name: Create additional service handlers file
+      template:
+        src: ./easy_envoy/templates/handlers.j2
+        dest: ./easy_envoy/handlers/handlers.yml
+      delegate_to: localhost
+
+

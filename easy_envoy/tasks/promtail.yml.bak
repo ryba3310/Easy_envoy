@@ -1,0 +1,69 @@
+- name: Get gpg singing key
+  get_url:
+    url: https://apt.grafana.com/gpg.key
+    dest: /root/grafana.gpg
+
+
+- name: Block for Debian
+  block:
+    - name: Install neccesary dependencies for Grafana
+      apt:
+        pkg:
+          - apt-transport-https
+          - software-properties-common
+          - wget
+        state: latest
+    - name: Conver key from PEM format to openPGP
+      shell: "cat /root/grafana.gpg | gpg --dearmor --yes -o /etc/apt/keyrings/grafana.gpg"
+
+    - name: Add Grafana repo
+      apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main"
+        state: present
+
+    - name: Install grafana
+      apt:
+        pkg:
+          - promtail
+        state: latest
+        update_cache: True
+      notify:
+        - start_loki
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- name: Block for Fedora
+  block:
+    - name: Add grafana report for rpm
+      yum_repository:
+        name: Grafana
+        description: Grafana repo
+        baseurl: https://rpm.grafana.com
+        gpgcheck: True
+        sslcacert: /etc/pki/tls/certs/ca-bundle.crt
+        sslverify: True
+        state: present
+        enabled: True
+        gpgkey: https://apt.grafana.com/gpg.key
+        repo_gpgcheck: True
+
+    - name: Install grafana
+      dnf:
+        pkg:
+          - promtail
+        state: latest
+        update_cache: True
+      notify:
+        - start_loki
+  when: ansible_distribution == "Fedora"
+
+- name: Supply promtail service unit run as root user
+  copy:
+    src: ./easy_envoy/files/promtail.service
+    dest: /etc/systemd/system/promtail.service
+
+- name: Create config for promtail
+  template:
+    src: ./easy_envoy/templates/promtail.yml.j2
+    dest: /etc/promtail/config.yml
+
+

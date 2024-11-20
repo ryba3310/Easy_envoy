@@ -1,0 +1,9 @@
+---
+
+- name: First playbbok
+  hosts: hosts
+  gather_facts: True
+  become: True
+  roles:
+    - role: easy_envoy
+

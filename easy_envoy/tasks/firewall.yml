@@ -1,0 +1,96 @@
+- name: Install UFW and set rules for debian based system
+  block:
+  - name: Install UFW
+    apt:
+      pkg: ufw
+      state: latest
+
+  - name: Allow ssh rules
+    ufw:
+      rule: allow
+      to_port: '22'
+      proto: tcp
+      state: reloaded
+
+  - name: Allow hhtp rules
+    ufw:
+      rule: allow
+      to_port: '80'
+      state: reloaded
+
+  - name: Allow hhtps rules
+    ufw:
+      rule: allow
+      to_port: '443'
+      state: reloaded
+
+  - name: Allow internal traffic
+    ufw:
+      rule: allow
+      from_ip: '10.1.0.0/8'
+      state: reloaded
+
+  - name: Allow internal traffic
+    ufw:
+      rule: allow
+      from_ip: '172.16.0.0/16'
+      state: reloaded
+
+  - name: Allow internal traffic
+    ufw:
+      rule: allow
+      from_ip: '192.168.0.0/16'
+      state: reloaded
+
+  - name: Deny policy
+    ufw:
+      default: deny
+      state: enabled
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+
+- name: Install firewalld and set rules for RHEL based system BLOCK
+  block:
+  - name: Install firewalld
+    dnf:
+      pkg: firewalld
+      state: latest
+
+  - name: Allow ssh rule for public
+    firewalld:
+      zone: public
+      service: ssh
+      state: enabled
+      permanent: true
+      immediate: true
+
+  - name: Drop all incoming traffic in default(public) zone
+    firewalld:
+      zone: public
+      target: DROP
+      permanent: true
+      state: enabled
+  - name: Allow all internal traffic
+    firewalld:
+      source: '192.168.0.0/16'
+      zone: internal
+      state: enabled
+  - name: Allow all internal traffic
+    firewalld:
+      source: '10.1.0.0/8'
+      zone: internal
+      state: enabled
+  - name: Allow all internal traffic
+    firewalld:
+      source: '172.16.0.0/16'
+      zone: internal
+      state: enabled
+  - name: Allow all internal traffic
+    firewalld:
+      port: '22-9999/tcp'
+      zone: internal
+      state: enabled
+  when: ansible_distribution == "Fedora"
+
+
+

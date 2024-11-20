@@ -1,0 +1,68 @@
+---
+# handlers file for easy_envoy
+- name: envoy_start
+  systemd:
+    name: envoy.service
+    state: restarted
+    enabled: True
+  when: envoy is defined
+- name: excalidraw_start
+  systemd:
+    name: excalidraw.service
+    state: started
+    enabled: True
+  when: excalidraw is defined
+- name: wastebin_start
+  systemd:
+    name: wastebin.service
+    state: started
+    enabled: True
+  when: wastebin is defined
+- name: vscode_start
+  systemd:
+    name: vscode.service
+    state: started
+    enabled: True
+  when: vscode is defined
+- name: vncserver_start
+  systemd:
+    name: "vncserver@:2.service"
+    state: started
+    enabled: True
+  when: vnc_server is defined
+- name: start_grafana
+  systemd:
+    name: grafana-server.service
+    state: started
+    enabled: True
+  when: grafana is defined
+- name: start_loki
+  systemd:
+    state: started
+    name: loki.service
+    enabled: True
+  when: loki is defined
+- name: start_prometheus
+  systemd:
+    state: started
+    name: prometheus.service
+    enabled: True
+  when: prometheus is defined
+- name: start_node_exporter
+  systemd:
+    state: started
+    name: node_exporter.service
+    enabled: True
+- name: start_promtail
+  systemd:
+    state: started
+    name: promtail.service
+    enabled: True
+- name: start_fail2ban
+  systemd:
+    state: started
+    name: fail2ban.service
+    enabled: True
+- name: Import service handlers
+  import_tasks: handlers.yml
+

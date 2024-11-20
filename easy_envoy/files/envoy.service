@@ -1,0 +1,12 @@
+[Unit]
+Description=Envoy Proxy Unit
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/envoy -c /etc/envoy/envoy.yml -l debug
+User=envoy
+Group=envoy
+
+[Install]
+WantedBy=default.target

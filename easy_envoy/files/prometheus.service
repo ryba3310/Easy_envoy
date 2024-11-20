@@ -1,0 +1,14 @@
+
+[Unit]
+Description=Prometheus Unit
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/opt/prometheus/prometheus-3.0.0.linux-amd64/prometheus --config.file /etc/prometheus.yml
+WorkingDirectory=/opt/prometheus/prometheus-3.0.0.linux-amd64/
+User=prometheus
+Group=prometheus
+
+[Install]
+WantedBy=default.target

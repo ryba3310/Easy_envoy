@@ -1,0 +1,14 @@
+
+{% for key in hostvars[ansible_hostname] %}
+{% if key | regex_search('service[0-9]+_port$') %}
+{% set service_name = key | regex_search('service[0-9]+') %}
+
+    - name: "{{ hostvars[ansible_hostname][service_name] }}_start"
+      systemd:
+        name: "{{ hostvars[ansible_hostname][service_name] }}.service"
+        state: started
+        enabled: True
+
+{% endif %}
+{% endfor %}
+ 
