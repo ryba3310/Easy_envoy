@@ -27,7 +27,7 @@ resources:
             - match:
                 prefix: "/"
               redirect:
-                host_redirect:
+                #host_redirect:
                 response_code: PERMANENT_REDIRECT
                 #port_redirect: 443
                 https_redirect: true   # only this one is neccessary
@@ -55,28 +55,31 @@ resources:
   filter_chains:
   - filter_chain_match:
       transport_protocol: tls
-      application_protocols: [h2]
+        #application_protocols: [h2]
       server_names: ["justalab.xyz", "*.justalab.xyz"]
-        #application_protocols: [http/1.1]
     transport_socket:
       name: envoy.transport_sockets.tls
       typed_config:
         "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
-          # require_client_certificate: true
+        require_client_certificate: true
         common_tls_context:
           #validation_context:
           #  trusted_ca:
-          #    filename: /opt/apigee/certs/cacert.pem # CA for validation clients certificate
+          #    filename: "/etc/letsencrypt/live/justalab.xyz/ca.crt"
           tls_certificates:
-          - certificate_chain: {filename: "/etc/letsencrypt/live/{{ domain_name}}/fullchain.pem"}
-            private_key: {filename: "/etc/letsencrypt/live/{{ domain_name }}/privkey.pem"}
+          - certificate_chain: {filename: "/etc/letsencrypt/archive/justalab.xyz/fullchain1.pem"}
+            private_key: {filename: "/etc/letsencrypt/archive/justalab.xyz/privkey1.pem"}
+          tls_params:
+            tls_minimum_protocol_version: TLSv1_3
           alpn_protocols: ["h2,http/1.1"]
+    name: tls
     filters:
     - name: envoy.filters.network.http_connection_manager
       typed_config:
         "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
         stat_prefix: ingress_https
         use_remote_address: true # Adds XFF header
+        xff_num_trusted_hops: '0' # becouse there are no proxy hops in front
         normalize_path: true
         merge_slashes: true
         path_with_escaped_slashes_action: UNESCAPE_AND_REDIRECT
@@ -104,15 +107,6 @@ resources:
 
         route_config:
           virtual_hosts:
-            - header:
-                key: "Connection"
-                value: "upgrade"
-              header:
-                key: "Upgrade"
-                value: "websocket"
-              header:
-                key: "Origin"
-                value: "http://10.2.2.13:8081/" # Hardcoded for testing if headers are the issue, for some reasone other headers don't get written
           - name: excalidraw
             domains: ["*"]
             routes:
@@ -151,14 +145,14 @@ resources:
                 - upgrade_type: websocket
                 #idle_timeout: 15s  # must be disabled for long-lived and streaming requests
             - match:
-                prefix: "/*"
+                path: "/"
                 headers:
                   - name: ":authority"
                     #present_match: True
                     string_match:
                       contains: "guacamole"
               redirect:
-                path_redirect: "/guacamole"
+                path_redirect: "/guacamole/"
             - match:
                 prefix: "/guacamole/"
                 headers:
@@ -200,4 +194,163 @@ resources:
 {% endif %}
 {% endfor %}
 {% endfor %}
+  - name: mtls
+    filters:
+    - name: envoy.filters.network.http_connection_manager
+      typed_config:
+        "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+        stat_prefix: ingress_https
+        use_remote_address: false # Adds XFF header
+        xff_num_trusted_hops: '0'
+        normalize_path: true
+        merge_slashes: true
+        path_with_escaped_slashes_action: UNESCAPE_AND_REDIRECT
+        common_http_protocol_options:
+          idle_timeout: 3600s  # 1 hour
+          headers_with_underscores_action: REJECT_REQUEST
+        http2_protocol_options:
+          max_concurrent_streams: 100
+          initial_stream_window_size: 65536  # 64 KiB
+          initial_connection_window_size: 1048576  # 1 MiB
+        #stream_idle_timeout: 300s  # 5 mins, must be disabled for long-lived and streaming requests
+        #request_timeout: 300s  # 5 mins, must be disabled for long-lived and streaming requests
+        http_filters:
+        - name: envoy.filters.http.router
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+        access_log:
+        - name: http_log
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.access_loggers.file.v3.FileAccessLog
+            path: /var/local/envoy/http.log
+        route_config:
+          virtual_hosts:
+          - name: excalidraw
+            domains: ["*"]
+            routes:
+            - match:
+                prefix: "/"
+                headers:
+                  - name: ":authority"
+                    string_match:
+                      contains: "excalidraw"
+              route:
+                cluster: excalidraw
+                upgrade_configs:
+                - upgrade_type: websocket
+                #idle_timeout: 15s  # must be disabled for long-lived and streaming requests
+            - match:
+                prefix: "/"
+                headers:
+                  - name: ":authority"
+                    #present_match: True
+                    string_match:
+                      contains: "wastebin"
+              route:
+                cluster: wastebin
+                upgrade_configs:
+                idle_timeout: 15s  # must be disabled for long-lived and streaming requests
+            - match:
+                prefix: "/"
+                headers:
+                  - name: ":authority"
+                    #present_match: True
+                    string_match:
+                      contains: "vscode"
+              route:
+                cluster: vscode
+                upgrade_configs:
+                - upgrade_type: websocket
+                #idle_timeout: 15s  # must be disabled for long-lived and streaming requests
+            - match:
+                path: "/"
+                headers:
+                  - name: ":authority"
+                    #present_match: True
+                    string_match:
+                      contains: "guacamole"
+              redirect:
+                path_redirect: "/guacamole/"
+            - match:
+                prefix: "/guacamole/"
+                headers:
+                  - name: ":authority"
+                    #present_match: True
+                    string_match:
+                      contains: "guacamole"
+              route:
+                cluster: guacamole
+                upgrade_configs:
+                - upgrade_type: websocket
+                #idle_timeout: 15s  # must be disabled for long-lived and streaming requests
+            - match:
+               prefix: "/"
+               headers:
+                 - name: ":authority"
+                   #present_match: True
+                   string_match:
+                     contains: "grafana"
+              route:
+                cluster: grafana
+                upgrade_configs:
+                - upgrade_type: websocket
+                #idle_timeout: 15s  # must be disabled for long-lived and streaming requests
+{% for host in ansible_play_hosts_all %}
+{% for key in hostvars[host] %}
+{% if key | regex_search('service[0-9]+$') %}
+            - match:
+                prefix: "/"
+                headers:
+                  - name: ":authority"
+                    #present_match: True
+                    string_match:
+                      contains: "{{ hostvars[host][key] }}"
+              route:
+                cluster: {{ hostvars[host][key] }}
+                upgrade_configs:
+                idle_timeout: 15s  # must be disabled for long-lived and streaming requests
+{% endif %}
+{% endfor %}
+{% endfor %}
+    transport_socket:
+      name: envoy.transport_sockets.mtls
+      typed_config:
+        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+        require_client_certificate: true
+        common_tls_context:
+          validation_context:
+            trusted_ca:
+              filename: "/etc/letsencrypt/live/justalab.xyz/ca.crt"
+          tls_certificates:
+          - certificate_chain: {filename: "/etc/letsencrypt/archive/justalab.xyz/fullchain1.pem"}
+            private_key: {filename: "/etc/letsencrypt/archive/justalab.xyz/privkey1.pem"}
+          tls_params:
+            tls_minimum_protocol_version: TLSv1_3
+          alpn_protocols: ["h2,http/1.1"]
+  filter_chain_matcher:
+    matcher_list:
+      matchers:
+        - predicate:
+            single_predicate:
+              input:
+                name: envoy.matching.inputs.server_name
+                typed_config:
+                  '@type': >-
+                    type.googleapis.com/envoy.extensions.matching.common_inputs.network.v3.ServerNameInput
+              value_match:
+                safe_regex:
+                  google_re2: {}
+                  regex: 'grafana.*|wastebin.*|excalidraw.*'
+          on_match:
+            action:
+              name: pick-allow-traffic-chain
+              typed_config:
+                '@type': type.googleapis.com/google.protobuf.StringValue
+                value: tls
+    on_no_match:
+      action:
+        name: pick-deny-traffic-chain
+        typed_config:
+          '@type': type.googleapis.com/google.protobuf.StringValue
+          value: mtls
 

@@ -1,0 +1,90 @@
+- name: Generate CA, key and client certificate BLOCK
+  block:
+  - name: Check if CA aleady exists
+    stat:
+      path: "/etc/letsencrytp/live/{{ domain_name }}/ca.pem"
+    register: ca_check
+
+  - name: Generate CA BLOCK
+    block:
+    - name: Generate CA private key
+      openssl_privatekey:
+        path: /root/ca_private_key.pem
+        owner: root
+        group: root
+        mode: '400'
+        curve: brainpoolP256r1
+        type: ECC
+        state: present
+    - name: Generate an OpenSSL Certificate Signing Request with Subject information
+      openssl_csr:
+        path: /root/ca.csr
+        privatekey_path: /root/ca_private_key.pem
+        country_name: US
+        organization_name: Easy_envoy
+        email_address: "{{ email_address }}"
+        common_name: "*.{{ domain_name }}"
+        use_common_name_for_san: false  # since we do not specify SANs, don't use CN as a SAN
+        key_usage:
+          - keyCertSign
+        state: present
+    - name: Generate CA certificate
+      community.crypto.x509_certificate:
+        path: "/etc/letsencrypt/live/{{ domain_name }}/ca.crt"
+        csr_path: /root/ca.csr
+        privatekey_path: /root/ca_private_key.pem
+        provider: selfsigned
+        owner: envoy
+        group: envoy
+        mode: '400'
+        state: present
+    when: not ca_check.stat.exists
+
+  - name: Check if client cert exists
+    stat:
+      path: /root/client.cert
+    register: client_check
+
+  - name: Generate client certificate BLOCK
+    block:
+    - name: Generate client private key
+      openssl_privatekey:
+        path: /root/client_private_key.pem
+        owner: root
+        group: root
+        mode: '400'
+        curve: brainpoolP256r1
+        type: ECC
+        state: present
+    - name: Genereate client cert signing Request
+      openssl_csr:
+        path: /root/client.csr
+        privatekey_path: /root/client_private_key.pem
+        country_name: US
+        organization_name: Easy_envoy
+        email_address: 'Some user email'
+        common_name: 'Some user'
+        use_common_name_for_san: false  # since we do not specify SANs, don't use CN as a SAN
+        state: present
+    - name: Sign the client csr
+      community.crypto.x509_certificate:
+        path: /root/client_cert.pem
+        csr_path: /root/client.csr
+        privatekey_path: /root/client_private_key.pem
+        ownca_path: "/etc/letsencrypt/live/{{ domain_name }}/ca.crt"
+        ownca_privatekey_path: /root/ca_private_key.pem
+        provider: ownca
+        mode: '400'
+        state: present
+    - name: Create PKCS12/PFX certificate-private_key bundle to share to clients
+      openssl_pkcs12:
+        friendly_name: Envoy client cert
+        action: export
+        path: /root/cert_key.pfx
+        privatekey_path: /root/client_private_key.pem
+        certificate_path: /root/client_cert.pem
+        state: present
+        mode: '400'
+    when: not client_check.stat.exists
+  when: envoy is defined
+

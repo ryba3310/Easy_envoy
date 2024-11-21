@@ -51,6 +51,9 @@
 - name: Install fail2ban
   import_tasks: fail2ban.yml
 
+- name: Generate self-signed CA and client certificate
+  import_tasks: generate_mTLS.yml
+
 - import_tasks: ../handlers/main.yml
 
 
