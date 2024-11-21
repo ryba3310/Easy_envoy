@@ -2,8 +2,13 @@
   block:
   - name: Check if CA aleady exists
     stat:
-      path: "/etc/letsencrytp/live/{{ domain_name }}/ca.pem"
+      path: "/etc/letsencrypt/live/{{ domain_name }}/ca.crt"
     register: ca_check
+
+  - name: Debug check
+    debug:
+      var: ca_check
+      verbosity: 1
 
   - name: Generate CA BLOCK
     block:
@@ -13,7 +18,7 @@
         owner: root
         group: root
         mode: '400'
-        curve: brainpoolP256r1
+        curve: secp384r1
         type: ECC
         state: present
     - name: Generate an OpenSSL Certificate Signing Request with Subject information
@@ -22,6 +27,8 @@
         privatekey_path: /root/ca_private_key.pem
         country_name: US
         organization_name: Easy_envoy
+        state_or_province_name: Cloud
+        organizational_unit_name: Envoy
         email_address: "{{ email_address }}"
         common_name: "*.{{ domain_name }}"
         use_common_name_for_san: false  # since we do not specify SANs, don't use CN as a SAN
@@ -53,7 +60,7 @@
         owner: root
         group: root
         mode: '400'
-        curve: brainpoolP256r1
+        curve: secp384r1
         type: ECC
         state: present
     - name: Genereate client cert signing Request
@@ -62,6 +69,8 @@
         privatekey_path: /root/client_private_key.pem
         country_name: US
         organization_name: Easy_envoy
+        state_or_province_name: Cloud
+        organizational_unit_name: Envoy
         email_address: 'Some user email'
         common_name: 'Some user'
         use_common_name_for_san: false  # since we do not specify SANs, don't use CN as a SAN
@@ -80,7 +89,7 @@
       openssl_pkcs12:
         friendly_name: Envoy client cert
         action: export
-        path: /root/cert_key.pfx
+        path: /root/client_bundle.pfx
         privatekey_path: /root/client_private_key.pem
         certificate_path: /root/client_cert.pem
         state: present
