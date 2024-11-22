@@ -6,3 +6,8 @@
        static_configs:
        - targets: ['{{ hostvars[host].ansible_default_ipv4.address }}:9100']
 {% endfor %}
+     - job_name: 'envoy'
+       scrape_interval: 15s  # How often to scrape Envoy metrics
+       metrics_path: '/stats/prometheus'  # Envoy's Prometheus metrics path
+       static_configs:
+       - targets: ['127.0.0.1:9091']  # Service exposing the Envoy admin port

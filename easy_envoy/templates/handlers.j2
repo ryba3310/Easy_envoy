@@ -1,14 +1,16 @@
 
-{% for key in hostvars[inventory_hostname] %}
+{% for host in ansible_play_hosts_all %}
+{% for key in hostvars[host] %}
 {% if key | regex_search('service[0-9]+_port$') %}
 {% set service_name = key | regex_search('service[0-9]+') %}
-- name: "{{ hostvars[inventory_hostname][service_name] }}_start"
+- name: "{{ hostvars[host][service_name] }}_start"
   systemd:
-    name: "{{ hostvars[inventory_hostname][service_name] }}.service"
+    name: "{{ hostvars[host][service_name] }}.service"
     state: started
     enabled: True
   when: {{ service_name }} is defined
 
 {% endif %}
+{% endfor %}
 {% endfor %}
 

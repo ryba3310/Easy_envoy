@@ -1,48 +1,105 @@
 
+# Intro
 
-Remeber to set unprivileged ports either system wide or at per process basis
+Ease_envoy is an Ansible role which enables easy deployment of front edge reverse proxy which forwad request to upstream services securing connection with at least TLS and for chosen services with mTLS.
+It's easy  to deploy becouse it only requiers a single host with domain name pointing to it and open TCP port 443.
+
+By defult it deploys these services:
+```
+Envoy - serving as a front edge proxy
+Grafana - for metrics monitoring and log proccessing
+Loki - for log aggregation
+Prometheus - for metrics polling and aggregation
+Promtail - for log pushing to Loki instance
+Node exporter - for system metrics polling by Prometheus
+Excalidraw - a virutal collaboratie white board
+Wastebin - a pastebin for sharing code snippets
+Vscode-server - a self-hosted in-browser remotely accesible VSCode instance
+Guacamole - a web-based remote desktop gateway supporting multiple remote access protocols
+Vnc server - a remote desktop server using VNC protocol allowing to access desktop remotely
+One-Time-Secret - a secret sharing service to demonstrate a user defined service
+```
+## How to step-by-step
+
+Clone this repo
+```sh
+git clone git@github.com:ryba3310/Easy_envoy.git
+```
+Define host variables inside inventory.ini with your favoite text editor.
+Run generate_tasks.yml to generate custom services tasks:
+```sh
+ansible-playbook generate_tasks.yml
+```
+Run the main playbook.yml
+```sh
+ansible-playbook playbook.yml
+```
+Obtain client certificate from envoy host in /root/ directory with either scp or and preferably method
+```
+scp your-host:/root/client_bundle.pfx /path/on/local/machine
+
+## How it works
+
+This role utilizes Ansible definition of variables per host in inventory file. Each host if it supposed to host a service is described by variable name corresponding to the service eg. ```grafana=True```.
+Default services consit of just simple ```name=True``` scheme and are predefined, whereas custom user defined services requier a bit more complex scheme.
+To define a custom service a host in inventory file should have at least 4 variables ```service<###>=<service_name>``` representing service name, ```service<###>_port=<service_listeing portj>``` representing service listening port, ```service<###>_uri=<uri_link```representing a uri to do download a service package, typically a tar archive from Github or other service, ```service<###>_path=</path/to/exec/after/unpack>``` representing path to executable after unpacking the archive and optionally a 5th ```service<###>_log_path=</path/to/log/file>``` representing a path to log file of the service. A <###> characers represent a service number which should be uniqe to indetifie the service and its required values among others services. An example inventory.ini file is supplied in this repository and looks like this:
+```
+[cloud1]
+cloud-1
+[cloud2]
+cloud-2
+[cloud3]
+cloud-3
+[hosts:children]
+cloud1
+cloud2
+cloud3
+[cloud1:vars]
+email_address=<email_address>
+domain_name=<domain_name>
+porkbun_api_key=<prokbun_api_key>
+porkbun_secret=<porkpun_secret_api_key>
+envoy=True
+prometheus=True
+guacamole=True
+vnc_server=True
+grafana=True
+loki=True
+[cloud2:vars]
+excalidraw=True
+wastebin=True
+[cloud3:vars]
+service1=ots
+service1_port=3000
+service1_path=/opt/ots/ots
+service1_url=https://github.com/Luzifer/ots/releases/download/v1.13.0/ots_linux_amd64.tgz
+vscode=True
+```
+
+This inventory consists of 3 hosts and each first grouped into its own group for ease of adding varibles to it with [<group>:vars] syntax.
+Also dont forget to fillout neccessary information for Lets's Encrypt, e-mail address, domain name(without wildcard) and API keys.
+
+## Info
+
+Whole setup tries to maintain a good security practices but doesn't adhere to any particular standard therefore isin't suited for production envioremnt and might have security vurneabilities. I will try to outline some basic applied protections. All services run as non-root user, on each host firewall is deployed and allows only http, https and ssh for Envoy host and ssh port for all other hosts. All external communication is encrypted with TLS and for services like VSCode which gives access to its local host's shell a user authentication with mTLS is required. A proxy's certificate is valid and is acquired with Let's Encrypt whereas mTLS certificates are generated with self-signed CA. All services should run on port > 1024 except Envoy. To bind to ports < 1024 without root priviliges Envoy executable is set with capabilites or permission might be set system-wide with:
 ```sh
 sysctl -w net.ipv4.ip_unprivileged_port_start=<lowest needed port>
-good practice to clear ansible cache with 'rm -r ~/.ansible/'
 ```
-// Use capabilities module with path: /foo
-    capability:        cap_net_bind_service+ep
-    state: present
 
+## Quirky limitations
 
-This repo uses Ansible to deploys Envoy Proxy as a front proxy with certbot generated TLS certificate and defult set of preconfigured services each ran by system-user with no login shell.
-It deploys systemd service units and provides jinja2 template for adding new 'simple' service not requiering self compiling or installing custom libraries, eg. using only precombiled binaraies from URL archive source.
-Jinja template is updated using user defined enviroment variables set in inventory file for playpabook which then populates tasks files with new services
+Ansible proably does static analysis of whole YAML playbook looking for syntax error and after that runs the playbook therefore, can't dynamically at runtime reload its playbook, due to it before running main playbook it is neccessary to run ```generate_tasks.yml''' to generate tasks for installing user defiend services and then run the main plabook.
+Also in case of some wired behavior with ansible eg. rong tasks genereation or SSH connection hanging, clear ansible might help cache with 'rm -r ~/.ansible/'
 
+It deploys systemd service units adding new 'simple' service not requiering self compiling or installing custom libraries so only precombiled binaraies from URL archive sources are supported
 
+## Reqierements
 
-Default set of services consists of:
-
-- Guacamole for remote desktop access via browser
-- ExCalidraw for simple drawing sharing
-- Pastebin for code snippets sharing
-- VSCode code-server for acces via browser
-
-All client's communication by default supposed to be mTLS autheticated with self generated certificate and CA (?) execpt sharing services( and optioanl OAuth / OpenID connect?)
-Requirements to run this playbook:
-
-What it does? (step by step)
-
-Setups firewall to allow only ssh, http, https for envoy host and LAN communication for every hosts
-Deploy and confiure envoy proxy for defined services and obtain SSL certs
-Install guacamole(dockerized), vnc server, wastebin, excalidraw and vscode-server
-Install any user definder services with variables
-
-
-
-Having own domain name, with wildcard subdomains(neccessary for certbot SSL validation and services access, currently configure for porkbun, easly changable)
-Few hosts deployed inside same LAN network(either locally or in cloud)
+Asnible
+Having own domain name, with wildcard subdomains, neccessary for certbot SSL validation and services access and registrar API keys(currently configured for porkbun, easly changable)
+At least one host with SSH access, preferably, few hosts deployed inside same LAN network(either locally or in cloud)
 Open ports 443 for accessing services
 Root acces to hosts thorugh sudo with provided password in .passwordfile or playbook enviroment variable
-
-
-
-
 
 # TODO
 
@@ -65,16 +122,16 @@ Root acces to hosts thorugh sudo with provided password in .passwordfile or play
 - ✅  Setup certbot and wildcard domain name
 - ✅  Generate and setup CA for mTLS authentication(use ECDSA P-256 at least)
 - ✅  Create some dasboards and presserve the config across deployments of this playbook
-- ⚠️  Tidy up README and make it comprehensive
-- ⚠️  Describe variables for hosts setting in inventory
+- ✅️  Tidy up README and make it comprehensive
+- ✅️  Describe variables for hosts setting in inventory
 - ⚠️  Minor fixes in naming and redundant expressions
 - ✅  Fix issue with guacamole path redirection
 - ✅  Fix downstream ssl error 'error:0A000126:SSL routines::unexpected eof while reading', maybe something with libs?
 - ✅  Seperate services for mTLS enabled and just TLS enabled
-- ✅  Fix vscode-server issue with websocket and tls, rather related to proxy as it works flawless without TLS
+- ✅  Fix vscode-server issue with websocket and TLS, rather related to proxy as it works flawless without TLS
 - ❌  Maybe apply chroot jail for vscode-server or host it in docker instead - mTLS will do
 - ❌  Make use of Filter chains in envoy instead of authrity match feature in routes - seems like to much hussle
-- ⚠️  Build Grafana dashboards
+- ✅  Build Grafana dashboards
 
 
 

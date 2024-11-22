@@ -1,56 +1,58 @@
 ---
-{% for key in hostvars[inventory_hostname] %}
+{% for host in ansible_play_hosts_all %}
+{% for key in hostvars[host] %}
 {% if key | regex_search('service[0-9]+_port$') %}
 {% set service_name = key | regex_search('service[0-9]+') %}
 {% set service_path = service_name ~ '_path' | string %}
 {% set service_url = service_name ~ '_url' | string %}
-- name: Install {{ hostvars[inventory_hostname][service_name] }}
+- name: Install {{ hostvars[host][service_name] }}
   block:
-  - name: "Grab archive for {{ hostvars[inventory_hostname][service_name] }}"
+  - name: "Grab archive for {{ hostvars[host][service_name] }}"
     get_url:
-      url: "{{ hostvars[inventory_hostname][service_url] }}"
+      url: "{{ hostvars[host][service_url] }}"
       dest: /root/
 
-  - name: "Create dir for {{ hostvars[inventory_hostname][service_name] }}"
+  - name: "Create dir for {{ hostvars[host][service_name] }}"
     file:
-      path: "/opt/{{ hostvars[inventory_hostname][service_name] }}/"
+      path: "/opt/{{ hostvars[host][service_name] }}/"
       state: directory
 
-  - name: "Unpack {{ hostvars[inventory_hostname][service_name] }}"
+  - name: "Unpack {{ hostvars[host][service_name] }}"
     unarchive:
-      src: "/root/{{ hostvars[inventory_hostname][service_url] | urlsplit('path') | basename }}"
+      src: "/root/{{ hostvars[host][service_url] | urlsplit('path') | basename }}"
       remote_src: True
-      dest: "/opt/{{ hostvars[inventory_hostname][service_name] }}/"
-      
-  - name: "Create user for {{ hostvars[inventory_hostname][service_name] }}"
+      dest: "/opt/{{ hostvars[host][service_name] }}/"
+
+  - name: "Create user for {{ hostvars[host][service_name] }}"
     user:
-      name: "{{ hostvars[inventory_hostname][service_name] }}"
+      name: "{{ hostvars[host][service_name] }}"
       state: present
       shell: /bin/nologin
 
-  - name: "Create systemd unit file for {{ hostvars[inventory_hostname][service_name] }}"
-    copy: 
-      dest: "/etc/systemd/system/{{ hostvars[inventory_hostname][service_name] }}.service"
+  - name: "Create systemd unit file for {{ hostvars[host][service_name] }}"
+    copy:
+      dest: "/etc/systemd/system/{{ hostvars[host][service_name] }}.service"
       content: |
         [Unit]
-        Description="{{ hostvars[inventory_hostname][service_name] }} Unit"
+        Description="{{ hostvars[host][service_name] }} Unit"
         Wants=network-online.target
 
         [Service]
         Type=simple
-        ExecStart={{ hostvars[inventory_hostname][service_path] }}
-        User={{ hostvars[inventory_hostname][service_name] }}
-        Group={{ hostvars[inventory_hostname][service_name] }}
+        ExecStart={{ hostvars[host][service_path] }}
+        User={{ hostvars[host][service_name] }}
+        Group={{ hostvars[host][service_name] }}
 
         [Install]
         WantedBy=default.target
     notify:
-      - "{{ hostvars[inventory_hostname][service_name] }}_start"
-  when: inventory_hostname {{ '== "' ~ inventory_hostname ~ '"' }}
+      - "{{ hostvars[host][service_name] }}_start"
+  when: inventory_hostname {{ '== "' ~ hostvars[host].inventory_hostname ~ '"' }}
 
 
-   
+
 {% endif %}
 {% endfor %}
- 
+{% endfor %}
+
 

@@ -7,7 +7,7 @@ server:
   grpc_server_max_concurrent_streams: 1000
 
 common:
-  instance_addr: 127.0.0.1
+  instance_addr: "{{ hostvars[inventory_hostname].ansible_default_ipv4.address }}"
   path_prefix: /tmp/loki
   storage:
     filesystem:
@@ -37,6 +37,13 @@ schema_config:
       index:
         prefix: index_
         period: 24h
+
+limits_config:
+   reject_old_samples: true
+   reject_old_samples_max_age: 168h
+   retention_period: 360h
+   max_query_series: 100000
+   max_query_parallelism: 2
 
 #pattern_ingester:
 #  enabled: true

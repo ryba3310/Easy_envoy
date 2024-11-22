@@ -56,6 +56,10 @@
         notify:
           - start_loki
     when: ansible_distribution == "Fedora"
+  - name: Copy loki config
+    template:
+      src: ./easy_envoy/templates/loki.conf.j2
+      dest: /etc/loki/config.conf
   when: loki is defined
 
 

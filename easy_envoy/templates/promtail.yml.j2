@@ -20,6 +20,7 @@ scrape_configs:
   - targets:
       - localhost
     labels:
+      host: {{ inventory_hostname }}
       job: syslog
       __path__: /var/log/*.log
 
@@ -28,6 +29,7 @@ scrape_configs:
   - targets:
       - localhost
     labels:
+      host: {{ inventory_hostname }}
       job: auth
       __path__: /var/log/fail2ban.log
 
@@ -38,6 +40,7 @@ scrape_configs:
   - targets:
       - localhost
     labels:
+      host: {{ inventory_hostname }}
       job: {{ service }}
       __path__: /var/local/envoy/http.log
 
@@ -48,6 +51,7 @@ scrape_configs:
   - targets:
       - localhost
     labels:
+      host: {{ inventory_hostname }}
       job: {{ service }}
       __path__: /var/local/envoy/excalidraw.log
 
@@ -58,6 +62,7 @@ scrape_configs:
   - targets:
       - localhost
     labels:
+      host: {{ inventory_hostname }}
       job: {{ service }}
       __path__: /var/local/envoy/wastebin.log
 
@@ -68,6 +73,7 @@ scrape_configs:
   - targets:
       - localhost
     labels:
+      host: {{ inventory_hostname }}
       job: {{ service }}
       __path__: /var/local/envoy/vscode.log
 
@@ -81,6 +87,7 @@ scrape_configs:
   - targets:
       - localhost
     labels:
+      host: {{ inventory_hostname }}
       job: {{ service_name }}
       __path__: {{ service_log_path }}
 
