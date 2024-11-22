@@ -35,14 +35,15 @@ Run the main playbook.yml
 ansible-playbook playbook.yml
 ```
 Obtain client certificate from envoy host in /root/ directory with either scp or and preferably method
-```
+```sh
 scp your-host:/root/client_bundle.pfx /path/on/local/machine
+```
 
 ## How it works
 
 This role utilizes Ansible definition of variables per host in inventory file. Each host if it supposed to host a service is described by variable name corresponding to the service eg. ```grafana=True```.
 Default services consit of just simple ```name=True``` scheme and are predefined, whereas custom user defined services requier a bit more complex scheme.
-To define a custom service a host in inventory file should have at least 4 variables ```service<###>=<service_name>``` representing service name, ```service<###>_port=<service_listeing portj>``` representing service listening port, ```service<###>_uri=<uri_link```representing a uri to do download a service package, typically a tar archive from Github or other service, ```service<###>_path=</path/to/exec/after/unpack>``` representing path to executable after unpacking the archive and optionally a 5th ```service<###>_log_path=</path/to/log/file>``` representing a path to log file of the service. A <###> characers represent a service number which should be uniqe to indetifie the service and its required values among others services. An example inventory.ini file is supplied in this repository and looks like this:
+To define a custom service a host in inventory file should have at least 4 variables ```service<###>=<service_name>``` representing service name, ```service<###>_port=<service_listeing portj>``` representing service listening port, ```service<###>_uri=<uri_link```representing a uri to do download a service package, typically a tar archive from Github or other service, ```service<###>_path=</path/to/exec/after/unpack>``` representing path to executable after unpacking the archive and optionally a 5th ```service<###>_log_path=</path/to/log/file>``` representing a path to log file of the service. A ```<###>``` characters represent a service number which should be uniqe to indetifie the service and its required values among others services. An example inventory.ini file is supplied in this repository and looks like this:
 ```
 [cloud1]
 cloud-1
