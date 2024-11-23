@@ -33,6 +33,12 @@
       state: present
       system: True
 
+  - name:
+    file:
+      path: /etc/letsencrypt/
+      recurse: True
+      owner: envoy
+
   - name: Copy static envoy config
     copy:
       src: ./easy_envoy/files/envoy.yml

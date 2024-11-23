@@ -63,6 +63,8 @@
     copy:
       src: ./easy_envoy/files/grafana.db
       dest: /var/lib/grafana/grafana.db
+      owner: grafana
+      group: grafana
   when: grafana is defined
 
 

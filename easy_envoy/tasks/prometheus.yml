@@ -5,6 +5,11 @@
       url: https://github.com/prometheus/prometheus/releases/download/v3.0.0/prometheus-3.0.0.linux-amd64.tar.gz
       dest: /root/
 
+  - name: Create user for prometheus
+    user:
+      name: prometheus
+      shell: /bin/nologin
+      state: present
 
   - name: Create dir for Prometheus
     file:
@@ -28,12 +33,6 @@
       src: ./easy_envoy/files/prometheus.service
       dest: /etc/systemd/system/prometheus.service
     notify: start_prometheus
-
-  - name: Create user for prometheus
-    user:
-      name: prometheus
-      shell: /bin/nologin
-      state: present
   when: prometheus is defined
 
 

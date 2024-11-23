@@ -1,0 +1,13 @@
+- name: Update and upgrade debian based
+  apt:
+    upgrade: yes
+    update_cache: yes
+    cache_valid_time: 86400
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- name: Update and upgrade RHEL based
+  dnf:
+    name: "*"
+    update_cache: True
+    state: latest
+  when: ansible_distribution == "Fedora"

@@ -2,13 +2,18 @@
   block:
   - name: Intall pip
     apt:
-      pkg: pip
+      pkg:
+        - pip
+        - python3-venv
+        - python3-virtualenv
       state: latest
     when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
 
   - name: Intall pip
     dnf:
-      pkg: pip
+      pkg:
+        - pip
+        - python3-pytest-venv
       state: latest
     when: ansible_distribution == "Fedora"
 
@@ -37,10 +42,4 @@
     --dns-porkbun-propagation-seconds 60 \
     -d "*.{{ domain_name }}"'
     register: shell_cert
-
-  - name:
-    file:
-      path: /etc/letsencrypt/
-      recurse: True
-      owner: envoy
   when: envoy is defined

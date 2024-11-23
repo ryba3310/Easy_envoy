@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 Environment="RUST_LOG=tower_http"
-#ExecStart=/opt/wastebin/wastebin
+ExecStart=/opt/wastebin/wastebin
 #StandardOutput=append:/var/local/envoy/wastebin.log
 StandardError=append:/var/local/envoy/wastebin.err.log
 User=wastebin

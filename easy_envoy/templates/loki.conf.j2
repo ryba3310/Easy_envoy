@@ -5,6 +5,11 @@ server:
   grpc_listen_port: 9096
   log_level: debug
   grpc_server_max_concurrent_streams: 1000
+  http_server_read_timeout: 600s
+  http_server_write_timeout: 600s
+  grpc_server_max_recv_msg_size: 8388608
+  grpc_server_max_send_msg_size: 8388608
+
 
 common:
   instance_addr: "{{ hostvars[inventory_hostname].ansible_default_ipv4.address }}"

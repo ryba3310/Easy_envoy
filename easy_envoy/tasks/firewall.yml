@@ -55,41 +55,46 @@
     dnf:
       pkg: firewalld
       state: latest
-
   - name: Allow ssh rule for public
-    firewalld:
-      zone: public
+    ansible.posix.firewalld:
       service: ssh
-      state: enabled
+      offline: True
       permanent: true
-      immediate: true
-
+      state: enabled
   - name: Drop all incoming traffic in default(public) zone
-    firewalld:
+    ansible.posix.firewalld:
       zone: public
       target: DROP
       permanent: true
-      state: enabled
-  - name: Allow all internal traffic
-    firewalld:
-      source: '192.168.0.0/16'
-      zone: internal
-      state: enabled
-  - name: Allow all internal traffic
-    firewalld:
+      state: present
+  - name: Allow all internal traffic '10'
+    ansible.posix.firewalld:
       source: '10.1.0.0/8'
       zone: internal
+      permanent: true
+      offline: True
       state: enabled
-  - name: Allow all internal traffic
-    firewalld:
+  - name: Allow all internal traffic '172'
+    ansible.posix.firewalld:
       source: '172.16.0.0/16'
       zone: internal
+      offline: True
+      permanent: true
       state: enabled
-  - name: Allow all internal traffic
-    firewalld:
+  - name: Allow all internal traffic ports
+    ansible.posix.firewalld:
       port: '22-9999/tcp'
       zone: internal
+      offline: True
+      permanent: true
       state: enabled
+  - name: Enable firewalld daemon
+    systemd:
+      name: firewalld
+      state: started
+      enabled: True
+  - name: Reload firewalld config
+    shell: firewall-cmd --reload
   when: ansible_distribution == "Fedora"
 
 

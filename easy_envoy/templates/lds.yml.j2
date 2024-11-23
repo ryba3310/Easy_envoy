@@ -55,7 +55,7 @@ resources:
   filter_chains:
   - filter_chain_match:
       transport_protocol: tls
-      application_protocols: [h2]
+      #application_protocols: [h2]
       server_names: ["justalab.xyz", "*.justalab.xyz"]
     transport_socket:
       name: envoy.transport_sockets.tls
@@ -139,11 +139,10 @@ resources:
                     #present_match: True
                     string_match:
                       contains: "vscode"
-              route:
-                cluster: vscode
-                upgrade_configs:
-                - upgrade_type: websocket
-                #idle_timeout: 15s  # must be disabled for long-lived and streaming requests
+              direct_response:
+                status: '401'
+                body:
+                  inline_string: 'I need to see client certificate'
             - match:
                 path: "/"
                 headers:
@@ -160,11 +159,10 @@ resources:
                     #present_match: True
                     string_match:
                       contains: "guacamole"
-              route:
-                cluster: guacamole
-                upgrade_configs:
-                - upgrade_type: websocket
-                #idle_timeout: 15s  # must be disabled for long-lived and streaming requests
+              direct_response:
+                status: '401'
+                body:
+                  inline_string: 'I need to see client certificate'
             - match:
                prefix: "/"
                headers:
@@ -187,10 +185,10 @@ resources:
                     #present_match: True
                     string_match:
                       contains: "{{ hostvars[host][key] }}"
-              route:
-                cluster: {{ hostvars[host][key] }}
-                upgrade_configs:
-                idle_timeout: 15s  # must be disabled for long-lived and streaming requests
+              direct_response:
+                status: '401'
+                body:
+                  inline_string: 'I need to see client certificate'
 {% endif %}
 {% endfor %}
 {% endfor %}
@@ -233,7 +231,7 @@ resources:
                 headers:
                   - name: ":authority"
                     string_match:
-                      contains: "excalidraw"
+                      contains: "admexcalidraw"
               route:
                 cluster: excalidraw
                 upgrade_configs:
@@ -245,7 +243,7 @@ resources:
                   - name: ":authority"
                     #present_match: True
                     string_match:
-                      contains: "wastebin"
+                      contains: "admwastebin"
               route:
                 cluster: wastebin
                 upgrade_configs:
@@ -289,7 +287,7 @@ resources:
                  - name: ":authority"
                    #present_match: True
                    string_match:
-                     contains: "grafana"
+                     contains: "admgrafana"
               route:
                 cluster: grafana
                 upgrade_configs:

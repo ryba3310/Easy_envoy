@@ -19,6 +19,9 @@ Guacamole - a web-based remote desktop gateway supporting multiple remote access
 Vnc server - a remote desktop server using VNC protocol allowing to access desktop remotely
 One-Time-Secret - a secret sharing service to demonstrate a user defined service
 ```
+
+You can check Grafna monitoring Dashboard at my own instance at grafna.justalab.xyz with login: user and password: 12345678
+
 ## How to step-by-step
 
 Clone this repo
@@ -38,12 +41,22 @@ Obtain client certificate from envoy host in /root/ directory with either scp or
 ```sh
 scp your-host:/root/client_bundle.pfx /path/on/local/machine
 ```
+Connect to your service uri <service_name>.<domain_name>:
+```sh
+grafana.example.com
+```
+And login to admin panel with login: admin and password: 12345678 set by default on deployment
 
 ## How it works
 
-This role utilizes Ansible definition of variables per host in inventory file. Each host if it supposed to host a service is described by variable name corresponding to the service eg. ```grafana=True```.
-Default services consit of just simple ```name=True``` scheme and are predefined, whereas custom user defined services requier a bit more complex scheme.
-To define a custom service a host in inventory file should have at least 4 variables ```service<###>=<service_name>``` representing service name, ```service<###>_port=<service_listeing portj>``` representing service listening port, ```service<###>_uri=<uri_link```representing a uri to do download a service package, typically a tar archive from Github or other service, ```service<###>_path=</path/to/exec/after/unpack>``` representing path to executable after unpacking the archive and optionally a 5th ```service<###>_log_path=</path/to/log/file>``` representing a path to log file of the service. A ```<###>``` characters represent a service number which should be uniqe to indetifie the service and its required values among others services. An example inventory.ini file is supplied in this repository and looks like this:
+This role utilizes Ansible definition of variables per host in inventory file. Each host if it supposed to host a service is described by variable name corresponding. 
+to the service eg. ```grafana=True```. Default services consit of just simple ```name=True``` scheme and are predefined, whereas custom user defined services
+ requier a bit more complex scheme. To define a custom service a host in inventory file should have at least 4 variables ```service<###>=<service_name>``` representing service name,
+ ```service<###>_port=<service_listeing portj>``` representing service listening port, ```service<###>_uri=<uri_link```representing a uri to do download a service package,
+ typically a tar archive from Github or other service, ```service<###>_path=</path/to/exec/after/unpack>``` representing path to executable after unpacking
+ the archive and optionally a 5th ```service<###>_log_path=</path/to/log/file>``` representing a path to log file of the service. A ```<###>``` characters represent a
+  service number which should be uniqe to indetifie the service and its required values among others services. An example inventory.ini file is supplied in this repository
+   and looks like this:
 ```
 [cloud1]
 cloud-1
@@ -94,6 +107,10 @@ Also in case of some wired behavior with ansible eg. rong tasks genereation or S
 
 It deploys systemd service units adding new 'simple' service not requiering self compiling or installing custom libraries so only precombiled binaraies from URL archive sources are supported
 
+Also mTLS and TLS seperation in envoy works as a kinda hack, which requries to seperate the naming scheme of hosts in uri, so being a mTLS client one should avoid using normal naming for hosts in FQDN for not mTLS protected services, rather add 'adm' to host's name in FQDN eg. admgrafana.example.com. Wastebin, ExCalidraw and Grafana are not mTLS enabled.
+
+Currently supports only Debain based distros and Fedora distro and Envoy host MUST be Debian based becouse Envoy doesn't provide yum repository.
+
 ## Reqierements
 
 Asnible
@@ -125,7 +142,7 @@ Root acces to hosts thorugh sudo with provided password in .passwordfile or play
 - ✅  Create some dasboards and presserve the config across deployments of this playbook
 - ✅️  Tidy up README and make it comprehensive
 - ✅️  Describe variables for hosts setting in inventory
-- ⚠️  Minor fixes in naming and redundant expressions
+- ⚠️   Minor fixes in naming and redundant expressions
 - ✅  Fix issue with guacamole path redirection
 - ✅  Fix downstream ssl error 'error:0A000126:SSL routines::unexpected eof while reading', maybe something with libs?
 - ✅  Seperate services for mTLS enabled and just TLS enabled
@@ -133,6 +150,9 @@ Root acces to hosts thorugh sudo with provided password in .passwordfile or play
 - ❌  Maybe apply chroot jail for vscode-server or host it in docker instead - mTLS will do
 - ❌  Make use of Filter chains in envoy instead of authrity match feature in routes - seems like to much hussle
 - ✅  Build Grafana dashboards
+- ⚠️   Make logs for everything and push it with promtail
+- ⚠️   Moar DASHBOARDS
+- ⚠️   Emply SDS in Envoy to avoid additional restrt after deployment to load generated certificate, SDS dynamically looks for new secrets
 
 
 

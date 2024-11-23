@@ -13,6 +13,15 @@ clients:
 {% endif %}
 {% endfor %}
 {% endfor %}
+    batchwait: 1s
+    batchsize: 1048576
+    timeout: 10s
+    follow_redirects: false
+    backoff_config:
+      min_period: 500ms
+      max_period: 5m0s
+      max_retries: 10
+
 
 scrape_configs:
 - job_name: syslog

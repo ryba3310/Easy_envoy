@@ -38,7 +38,7 @@
   when: grafana is defined
 - name: start_loki
   systemd:
-    state: started
+    state: restarted
     name: loki.service
     enabled: True
   when: loki is defined
@@ -55,7 +55,7 @@
     enabled: True
 - name: start_promtail
   systemd:
-    state: started
+    state: restarted
     name: promtail.service
     enabled: True
 - name: start_fail2ban

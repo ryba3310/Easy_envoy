@@ -6,6 +6,9 @@
     var: ansible_facts
     verbosity: 1
 
+- name: Update and upgrade
+  import_tasks: update_upgrade.yml
+
 - name: Install firewall
   import_tasks: firewall.yml
 

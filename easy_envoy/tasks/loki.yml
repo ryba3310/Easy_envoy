@@ -59,7 +59,11 @@
   - name: Copy loki config
     template:
       src: ./easy_envoy/templates/loki.conf.j2
-      dest: /etc/loki/config.conf
+      dest: /etc/loki/config.yml
+  - name: Start loki service
+    systemd:
+      name: loki
+      state: started
   when: loki is defined
 
 
