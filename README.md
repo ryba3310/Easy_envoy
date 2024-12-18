@@ -157,6 +157,7 @@ Root acces to hosts thorugh sudo with provided password in .passwordfile or play
 - ⚠️   Emply SDS in Envoy to avoid additional restrt after deployment to load generated certificate, SDS dynamically looks for new secrets
 - ⚠️   Add add and use Envoy ability to scale and discover services as needed under workload
 - ⚠️   Find solution to L5 problem
+- ⚠️   Fix Docker 'promiscuous' mode with UFW/iptables when it bypasses the host based rules(mitigated with cloud provider rules)
 
 
 
