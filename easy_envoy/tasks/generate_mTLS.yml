@@ -92,6 +92,7 @@
         path: /root/client_bundle.pfx
         privatekey_path: /root/client_private_key.pem
         certificate_path: /root/client_cert.pem
+        passphrase: 'password1234'
         state: present
         mode: '400'
     when: not client_check.stat.exists
