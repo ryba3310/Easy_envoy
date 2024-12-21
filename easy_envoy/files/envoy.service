@@ -4,7 +4,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/envoy -c /etc/envoy/envoy.yml -l debug
+ExecStart=/usr/bin/envoy -c /etc/envoy/envoy.yml -l info
 User=envoy
 Group=envoy
 
