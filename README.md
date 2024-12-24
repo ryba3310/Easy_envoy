@@ -2,7 +2,9 @@
 # Intro
 
 Ease_envoy is an Ansible role which enables easy deployment of front edge reverse proxy which forwad request to upstream services securing connection with at least TLS and for chosen services with mTLS.
-It's easy  to deploy becouse it only requiers a single host with domain name pointing to it and open TCP port 443.
+It's easy  to deploy becouse it only requiers a single host with domain name pointing to it and open TCP port 443. 
+
+Uses HTTP2(Envoy's default) and HTTP3/QUIC for non mTLS connections.
 
 By defult it deploys these services:
 ```
