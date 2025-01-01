@@ -39,7 +39,7 @@ Run the main playbook.yml
 ```sh
 ansible-playbook playbook.yml
 ```
-Obtain client certificate from envoy host in /root/ directory with either scp or and preferably method
+Obtain client certificate from envoy host in /root/ directory with either scp or any preferably method
 ```sh
 scp your-host:/root/client_bundle.pfx /path/on/local/machine
 ```
@@ -56,7 +56,7 @@ to the service eg. ```grafana=True```. Default services consit of just simple ``
  requier a bit more complex scheme. <br />To define a custom service a host in inventory file should have at least 4 variables: <br />```service<###>=<service_name>``` representing service name,<br />
  ```service<###>_port=<service_listeing portj>``` representing service listening port,<br /> ```service<###>_uri=<uri_link```representing a uri to do download a service package,
  typically a tar archive from Github or other service,<br /> ```service<###>_path=</path/to/exec/after/unpack>``` representing path to executable after unpacking
- the archive and optionally a 5th,<br /> ```service<###>_log_path=</path/to/log/file>``` representing a path to log file of the service.<br /> A ```<###>``` characters represent a
+ the archive and optionally a 5th,<br /> ```service<###>_log_path=</path/to/log/file>``` representing a path to log file of the service.<br /> ```<###>``` characters represent a
   service number which should be uniqe to indetifie the service and its required values among others services. An example inventory.ini file is supplied in this repository
    and looks like this:
 ```
@@ -104,13 +104,15 @@ sysctl -w net.ipv4.ip_unprivileged_port_start=<lowest needed port>
 
 ## Quirky limitations
 
-A Layer 5 - session layer problem with mTLS due to HTTP2 long living connection. When the connection is first established as normal TLS without mTLS, subsequent requests are therefore forward through existing HTTP2 stream which doesn't know about mTLS and doesnt grant access to protected resource. Temporal fix is to run ```sudo ss -K dst <ip> dport = 443``` to kill the TLS session and then establish mTLS session by connecting to mTLS protected resource.
+### A Layer 5 - session layer problem with mTLS due to HTTP2 long living connection. 
+When the connection is first established as normal TLS without mTLS, subsequent requests are therefore forward through existing HTTP2 stream which doesn't know about mTLS and doesnt grant access to protected resource. Temporal fix is to run ```sudo ss -K dst <ip> dport = 443``` to kill the TLS session and then establish mTLS session by connecting to mTLS protected resource.
 
-Ansible proably does static analysis of whole YAML playbook looking for syntax error and after that runs the playbook therefore, can't dynamically at runtime reload its playbook, due to it before running main playbook it is neccessary to run ```generate_tasks.yml''' to generate tasks for installing user defiend services and then run the main plabook.
+### Dynamic config generation 
+Ansible proably does static syntax check of whole YAML playbook looking for syntax error and after that runs the playbook therefore, can't dynamically at runtime reload its playbook, due to it before running main playbook it is neccessary to run ```generate_tasks.yml''' to generate tasks for installing user defiend services and then run the main plabook.
 Also in case of some wired behavior with ansible eg. rong tasks genereation or SSH connection hanging, clear ansible might help cache with 'rm -r ~/.ansible/'
 
-It deploys systemd service units adding new 'simple' service not requiering self compiling or installing custom libraries so only precombiled binaraies from URL archive sources are supported
 
+It deploys systemd service units adding new 'simple' service not requiering self compiling or installing custom libraries so only precombiled binaraies from URL archive sources are supported
 Also mTLS and TLS seperation in envoy works as a kinda hack, which requries to seperate the naming scheme of hosts in uri, so being a mTLS client one should avoid using normal naming for hosts in FQDN for not mTLS protected services, rather add 'adm' to host's name in FQDN eg. admgrafana.example.com. Wastebin, ExCalidraw and Grafana are not mTLS enabled.
 
 Currently supports only Debain based distros and Fedora distro and Envoy host MUST be Debian based becouse Envoy doesn't provide yum repository.
@@ -155,12 +157,12 @@ Root acces to hosts thorugh sudo with provided password in .passwordfile or play
 - ❌  Make use of Filter chains in envoy instead of authrity match feature in routes - seems like to much hussle
 - ✅  Build Grafana dashboards
 - ⚠️   Make logs for everything and push it with promtail
-- ⚠️   Moar DASHBOARDS
-- ⚠️   Emply SDS in Envoy to avoid additional restrt after deployment to load generated certificate, SDS dynamically looks for new secrets
+- ⚠️   More DASHBOARDS
+- ⚠️   Employ SDS in Envoy to avoid additional restart after deployment to load generated certificate, SDS dynamically looks for new secrets
 - ⚠️   Add add and use Envoy ability to scale and discover services as needed under workload
-- ⚠️   Find solution to L5 problem
+- ⚠️   Find solution to L5 problem(probably not possible due to 'hacky' nature of applied solution)
 - ⚠️   Fix Docker 'promiscuous' mode with UFW/iptables when it bypasses the host based rules(mitigated with cloud provider rules)
-- ⚠️   Add HTTP3/QUIC support in envoy config
+- ✅   Add HTTP3/QUIC support in envoy config
 
 
 
