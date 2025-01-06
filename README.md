@@ -108,8 +108,8 @@ sysctl -w net.ipv4.ip_unprivileged_port_start=<lowest needed port>
 When the connection is first established as normal TLS without mTLS, subsequent requests are therefore forward through existing HTTP2 stream which doesn't know about mTLS and doesnt grant access to protected resource. Temporal fix is to run ```sudo ss -K dst <ip> dport = 443``` to kill the TLS session and then establish mTLS session by connecting to mTLS protected resource.
 
 ### Dynamic config generation 
-Ansible proably does static syntax check of whole YAML playbook looking for syntax error and after that runs the playbook therefore, can't dynamically at runtime reload its playbook, due to it before running main playbook it is neccessary to run ```generate_tasks.yml''' to generate tasks for installing user defiend services and then run the main plabook.
-Also in case of some wired behavior with ansible eg. rong tasks genereation or SSH connection hanging, clear ansible might help cache with 'rm -r ~/.ansible/'
+Ansible proably does static syntax check(maybe use import instead of include?) of whole YAML playbook looking for syntax error and after that runs the playbook therefore, can't dynamically at runtime reload its playbook, due to it before running main playbook it is neccessary to run ```generate_tasks.yml''' to generate tasks for installing user defiend services and then run the main plabook.
+Also in case of some wired behavior with ansible eg. wrong tasks genereation or SSH connection hanging, clear ansible might help cache with 'rm -r ~/.ansible/'
 
 
 It deploys systemd service units adding new 'simple' service not requiering self compiling or installing custom libraries so only precombiled binaraies from URL archive sources are supported
@@ -161,7 +161,7 @@ Root acces to hosts thorugh sudo with provided password in .passwordfile or play
 - ⚠️   Employ SDS in Envoy to avoid additional restart after deployment to load generated certificate, SDS dynamically looks for new secrets
 - ⚠️   Add add and use Envoy ability to scale and discover services as needed under workload
 - ⚠️   Find solution to L5 problem(probably not possible due to 'hacky' nature of applied solution)
-- ⚠️   Fix Docker 'promiscuous' mode with UFW/iptables when it bypasses the host based rules(mitigated with cloud provider rules)
+- ✅   Fix Docker 'promiscuous' mode with UFW/iptables when it bypasses the host based rules(mitigated with cloud provider rules)
 - ✅   Add HTTP3/QUIC support in envoy config
 
 

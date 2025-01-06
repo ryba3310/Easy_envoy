@@ -46,6 +46,14 @@
     ufw:
       default: deny
       state: enabled
+
+  - name: Copy UFW file to fix Docker bypassing rules
+    copy:
+      src: ./easy_envoy/files/after.rules
+      dest: /etc/ufw/after.rules
+      user: root
+      group: root
+      mode: 640
   when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
 
 
