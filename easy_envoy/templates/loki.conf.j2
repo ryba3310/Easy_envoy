@@ -35,13 +35,49 @@ query_range:
 
 schema_config:
   configs:
-    - from: 2020-10-24
-      store: tsdb
+    - from: "2024-12-03" # <---- A date in the past
+      index:
+        period: 24h
+        prefix: index_
+      object_store: filesystem
+      schema: v12
+      store: boltdb-shipper
+    # New TSDB schema below
+    - from: "2024-12-05" # <---- A date in the future
+      index:
+        period: 24h
+        prefix: index_
       object_store: filesystem
       schema: v13
-      index:
-        prefix: index_
-        period: 24h
+      store: tsdb
+
+storage_config:
+  # Old boltdb-shipper configuration. Included in example for reference but does not need changing.
+  boltdb_shipper:
+    active_index_directory: /data/index
+    build_per_tenant_index: true
+    cache_location: /data/boltdb-cache
+      # only applicable if using microservices where index-gateways are independently deployed.
+      # This example is using kubernetes-style naming.
+  # New tsdb-shipper configuration
+  tsdb_shipper:
+    active_index_directory: /data/tsdb-index
+    cache_location: /data/tsdb-cache
+      # only applicable if using microservices where index-gateways are independently deployed.
+      # This example is using kubernetes-style naming.
+
+query_scheduler:
+  # the TSDB index dispatches many more, but each individually smaller, requests.
+  # We increase the pending request queue sizes to compensate.
+  max_outstanding_requests_per_tenant: 32768
+
+querier:
+  query_ingesters_within: 3h
+  # Each `querier` component process runs a number of parallel workers to process queries simultaneously.
+  # You may want to adjust this up or down depending on your resource usage
+  # (more available cpu and memory can tolerate higher values and vice versa),
+  # but we find the most success running at around `16` with tsdb
+  max_concurrent: 16
 
 limits_config:
    reject_old_samples: true
